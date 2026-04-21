@@ -1,6 +1,10 @@
 import os
 import uvicorn
 from dotenv import load_dotenv
+
+# load_dotenv must be before DEFAULT_MODEL_NAME
+load_dotenv(override=True)
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
@@ -31,48 +35,59 @@ def query_graph(question: str):
     :return: A htmlresponse object
 
     """
-    graph_cypher_qachain = CypherQa(model_name=DEFAULT_MODEL_NAME)
-    response = graph_cypher_qachain.run(question)
-    return HTMLResponse(content=response, status_code=200)
+    try:
+        graph_cypher_qachain = CypherQa(model_name=DEFAULT_MODEL_NAME)
+        if not graph_cypher_qachain.neo4j_instance.graph:
+             return HTMLResponse(content="Neo4j connection is not available. Please check your configuration.", status_code=200)
+        response = graph_cypher_qachain.run(question)
+        return HTMLResponse(content=response, status_code=200)
+    except Exception as e:
+        return HTMLResponse(content=f"Error initializing Graph QA: {str(e)}", status_code=200)
 
+
+from fastapi import FastAPI, BackgroundTasks
+# ...
 
 @app.get("/generate_tags_from_html")
-async def generate_tags():
-    """
-    The generate_tags function is a ReST endpoint that will generate the tags for all the data sources.
-    This function is called by an external service, such as Jenkins or Travis CI, to ensure that the tags are up-to-date.
-    The function returns a 200 status code if successful and 500 otherwise.
-
-    :return: A htmlresponse object with the content as 'successfully generated the knowledge from the data sources!!!' and status_code as 200
-
-    """
-    # Resolve absolute path for datasources.yml
+async def generate_tags(background_tasks: BackgroundTasks):
     current_dir = os.path.dirname(os.path.abspath(__file__)) # src/app
     src_dir = os.path.dirname(current_dir) # src
+    root_dir = os.path.dirname(src_dir) # project root
+    
     datasources_path = os.path.join(src_dir, 'datalayer', 'datasources.yml')
-
-    ner = NameIdentityRetrievalForHtml(model_name=DEFAULT_MODEL_NAME, data_path=datasources_path)
-    ner.run_async()  # asyncronous call since html pages can take time to load and scrape
-    return HTMLResponse(content='Successfully generated the knowledge from the data sources!!!', status_code=200)
+    if not os.path.exists(datasources_path):
+         datasources_path = os.path.join(root_dir, 'src', 'datalayer', 'datasources.yml')
+    
+    try:
+        ner = NameIdentityRetrievalForHtml(model_name=DEFAULT_MODEL_NAME, data_path=datasources_path)
+        if not ner.neo4j_instance.graph:
+             return HTMLResponse(content='Neo4j connection not available.', status_code=503)
+        
+        background_tasks.add_task(ner.run_async)
+        return HTMLResponse(content='Successfully started knowledge generation from HTML sources as a background task!!!', status_code=200)
+    except Exception as e:
+        return HTMLResponse(content=f"Error starting HTML processing: {str(e)}", status_code=500)
 
 
 @app.get("/generate_tags_from_csv")
-def generate_tags():
-    """
-    The generate_tags function is a ReST endpoint that will generate the tags for each of the data sources.
-        It uses the NameIdentityRetrievalForCsv class to accomplish this task.
-        The model_name and data_path are passed as parameters to this function.
-
-    :return: A htmlresponse object with the status code 200
-    """
-    # Resolve absolute path for datasources.yml
+def generate_tags(background_tasks: BackgroundTasks):
     current_dir = os.path.dirname(os.path.abspath(__file__)) # src/app
     src_dir = os.path.dirname(current_dir) # src
+    root_dir = os.path.dirname(src_dir) # project root
+
     datasources_path = os.path.join(src_dir, 'datalayer', 'datasources.yml')
+    if not os.path.exists(datasources_path):
+         datasources_path = os.path.join(root_dir, 'src', 'datalayer', 'datasources.yml')
     
-    ner = NameIdentityRetrievalForCsv(model_name=DEFAULT_MODEL_NAME, data_path=datasources_path)
-    ner.run()
-    return HTMLResponse(content='Successfully generated the knowledge from the data sources!!!', status_code=200)
+    try:
+        ner = NameIdentityRetrievalForCsv(model_name=DEFAULT_MODEL_NAME, data_path=datasources_path)
+        if not ner.neo4j_instance.graph:
+             return HTMLResponse(content='Neo4j connection not available.', status_code=503)
+        
+        background_tasks.add_task(ner.run)
+        return HTMLResponse(content='Successfully started knowledge generation from CSV sources as a background task!!!', status_code=200)
+    except Exception as e:
+        return HTMLResponse(content=f"Error starting CSV processing: {str(e)}", status_code=500)
 
 
 # health check route
@@ -83,5 +98,5 @@ def health_check():
 
 if __name__ == '__main__':
     app_config = utils.read_yaml_file('src/app/config.yml')
-    load_dotenv()
+    load_dotenv(override=True)
     uvicorn.run(app, port=app_config.get('port'), host=app_config.get('host'))

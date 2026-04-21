@@ -55,17 +55,21 @@ class NameIdentityRetrievalForCsv(BaseComponent):
                 if not rows:
                     continue
 
-                # Original logic used data[-1] (last row) - converted to text format
-                last_row = rows[-1]
-                # Mimic CSVLoader format: "key: value\n..."
-                page_content = "\n".join([f"{k}: {v}" for k, v in last_row.items()])
-
-                # Use the configured Hugging Face model and extract knowledge graph.
-                self.logger.info(f'loading model {self.llm}')
+                self.logger.info(f"Processing {len(rows)} rows from {csvfile}")
                 
-                response = self.llm.run(input_text=page_content)
-                # instantiating neo4jBD and dumping the knowledge graph
-                self.neo4j_instance.run(data=response)
-                self.logger.info(f'knowledge graph populated successfully for data source: {csvfile}')
+                # Process rows in batches to avoid overwhelming the LLM
+                batch_size = 10
+                for i in range(0, len(rows), batch_size):
+                    batch = rows[i:i + batch_size]
+                    batch_content = "\n---\n".join([
+                        "\n".join([f"{k}: {v}" for k, v in row.items()]) 
+                        for row in batch
+                    ])
+                    
+                    self.logger.info(f"Processing batch {i//batch_size + 1}/{(len(rows)-1)//batch_size + 1}...")
+                    response = self.llm.run(input_text=batch_content)
+                    self.neo4j_instance.run(data=response)
+                
+                self.logger.info(f'Knowledge graph populated successfully for data source: {csvfile}')
             except Exception as e:
                 self.logger.error(f"Error processing csv {csvfile}: {e}")

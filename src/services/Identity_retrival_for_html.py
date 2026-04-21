@@ -41,7 +41,8 @@ class NameIdentityRetrievalForHtml(BaseComponent):
         for link in self.html_sources:
             try:
                 self.logger.info(f"Fetching {link}...")
-                response = requests.get(link, timeout=30)
+                headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+                response = requests.get(link, headers=headers, timeout=30)
                 if response.status_code != 200:
                     self.logger.error(f"Failed to fetch {link}: {response.status_code}")
                     continue
@@ -60,16 +61,33 @@ class NameIdentityRetrievalForHtml(BaseComponent):
                     continue
 
                 content = docs_transformed[0].page_content
-                self.logger.info(content[0:500])
+                self.logger.info(f"Content length: {len(content)}")
+
+                # Document spliting
+                from langchain_text_splitters import RecursiveCharacterTextSplitter
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=1500,
+                    chunk_overlap=150,
+                    length_function=len,
+                )
+                chunks = text_splitter.split_text(content)
+                self.logger.info(f"Split content into {len(chunks)} chunks.")
 
                 # Use the configured Hugging Face model and extract knowledge graph.
-                self.logger.info(f'loading model {self.llm}')
+                self.logger.info(f'Processing chunks with model {self.llm}')
 
-                # The selected model supports long context, so we can pass the whole content
-                llm_response = self.llm.run(input_text=content)
-                # instantiating neo4jBD and dumping the knowledge graph
-                self.neo4j_instance.run(data=llm_response)
-                self.logger.info(f'knowledge graph populated successfully for data source: {link}')
+                for i, chunk in enumerate(chunks):
+                    self.logger.info(f"Processing chunk {i+1}/{len(chunks)}...")
+                    # Add schema context for unstructured dataset tracking
+                    rich_chunk = f"Source URL: {link}\n\nUnstructured Content:\n{chunk}"
+                    
+                    # Extract partial knowledge graph from chunk
+                    llm_response = self.llm.run(input_text=rich_chunk)
+                    
+                    # Dump the partial graph to Neo4j
+                    self.neo4j_instance.run(data=llm_response)
+                
+                self.logger.info(f'Knowledge graph populated successfully for data source: {link}')
             except Exception as e:
                 self.logger.error(f"Error processing {link}: {e}")
 

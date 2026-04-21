@@ -1,6 +1,7 @@
 neo4j:
-  uri: neo4j+s://048fba16.databases.neo4j.io
-  username: neo4j
-  password: zkkbLZ2T_uvCoD2hfw00gFcIJ1qZxqKdo-TiAbBubPI
+  uri: neo4j+s://eb198960.databases.neo4j.io
+  username: eb198960
+  password: A1gDCxKd5np2jCwNJLcmmy9KZCyw7hWUL324QBV3aKU
+  database: eb198960
 port: 8000
 host: 0.0.0.0

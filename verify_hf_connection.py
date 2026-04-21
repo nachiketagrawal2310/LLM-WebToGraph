@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def verify():
-    load_dotenv()
+    load_dotenv(override=True)
     model_name = os.getenv("HF_MODEL_ID", "Qwen/Qwen3-30B-A3B-Instruct-2507")
     logger.info("Using Hugging Face model: %s", model_name)
     

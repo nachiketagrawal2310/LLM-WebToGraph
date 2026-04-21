@@ -1,3 +1,4 @@
+title: ExtractionSchema
 properties:
   Organizations:
     type: string

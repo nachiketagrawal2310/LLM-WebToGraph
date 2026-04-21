@@ -2,8 +2,8 @@ import os
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema import Document
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.documents import Document
 
 from app import utils
 from app.llm import DEFAULT_HF_MODEL, build_hf_chat_model

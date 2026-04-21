@@ -1,0 +1,15 @@
+Movie,Year,Director,LeadActor,SupportingActor,Genre,Origin,BoxOffice
+The Matrix,1999,Lana Wachowski,Keanu Reeves,Laurence Fishburne,Sci-Fi,USA,460M
+The Matrix Reloaded,2003,Lana Wachowski,Keanu Reeves,Carrie-Anne Moss,Sci-Fi,USA,741M
+Inception,2010,Christopher Nolan,Leonardo DiCaprio,Joseph Gordon-Levitt,Sci-Fi,USA,836M
+The Dark Knight,2008,Christopher Nolan,Christian Bale,Heath Ledger,Action,USA,1B
+Pulp Fiction,1994,Quentin Tarantino,John Travolta,Samuel L. Jackson,Crime,USA,213M
+Forrest Gump,1994,Robert Zemeckis,Tom Hanks,Robin Wright,Drama,USA,678M
+Cast Away,2000,Robert Zemeckis,Tom Hanks,Helen Hunt,Drama,USA,429M
+Interstellar,2014,Christopher Nolan,Matthew McConaughey,Anne Hathaway,Sci-Fi,USA,701M
+Django Unchained,2012,Quentin Tarantino,Jamie Foxx,Christoph Waltz,Western,USA,425M
+Inglourious Basterds,2009,Quentin Tarantino,Brad Pitt,Christoph Waltz,War,USA,321M
+Dune,2021,Denis Villeneuve,Timothée Chalamet,Zendaya,Sci-Fi,USA,402M
+Blade Runner 2049,2017,Denis Villeneuve,Ryan Gosling,Harrison Ford,Sci-Fi,USA,259M
+Titanic,1997,James Cameron,Leonardo DiCaprio,Kate Winslet,Romance,USA,2.2B
+Avatar,2009,James Cameron,Sam Worthington,Zoe Saldana,Sci-Fi,USA,2.9B
