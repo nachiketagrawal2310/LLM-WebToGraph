@@ -1,10 +1,14 @@
 import os
 import sys
 import logging
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Add src to path so we can import app modules
-sys.path.append(os.path.join(os.getcwd(), 'src'))
+# Add src to path using script location (works from any cwd).
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SRC_DIR = REPO_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 from app.llm import Llm
 

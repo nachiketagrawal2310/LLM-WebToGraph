@@ -28,6 +28,27 @@ The LLM-WebToGraph project combines several key components to achieve its goal:
 - FastAPI-based health check API to monitor the application's status.
 - Streamlit web application for querying and visualizing the knowledge graph.
 
+## Project Layout
+
+```text
+LLM-WebToGraph/
+├── src/
+│   ├── app/           # Core LLM app logic and FastAPI entrypoint
+│   ├── components/    # Shared base components
+│   ├── datalayer/     # Neo4j dumpers, graph models, preprocessing
+│   ├── services/      # CSV/HTML ingestion and Cypher QA services
+│   ├── data/          # Sample/source datasets
+│   └── UI/            # Streamlit UI (kept as-is)
+├── scripts/
+│   ├── debug/         # Debug and troubleshooting scripts
+│   ├── diagnostics/   # Environment and dependency diagnostics
+│   └── verify/        # External connectivity checks (HF/Neo4j)
+├── tests/
+│   └── smoke/         # Lightweight import and capability smoke checks
+├── requirements.txt
+└── run.sh
+```
+
 ## Getting Started
 
 ### Prerequisites
@@ -70,6 +91,22 @@ The LLM-WebToGraph project combines several key components to achieve its goal:
    streamlit run src/UI/ui.py
    ```
    *Access UI at: http://localhost:8501/*
+
+### Utility Scripts
+
+```bash
+# Diagnostics
+python scripts/diagnostics/check_capabilities.py
+python scripts/diagnostics/list_models.py
+
+# Verification
+python scripts/verify/verify_hf_connection.py
+python scripts/verify/verify_neo4j.py
+
+# Debug helpers
+python scripts/debug/debug_ingestion.py
+python scripts/debug/debug_qa.py
+```
 ## Working directory
 ![Directory Tree](https://github.com/prvnsingh/LLM-WebToGraph/blob/main/dirTree.jpg?raw=true)
 
@@ -100,4 +137,3 @@ Integration with more data sources for enhanced knowledge graph creation.
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-# LLM-WebToGraph
