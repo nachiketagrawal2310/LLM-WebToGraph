@@ -14,20 +14,20 @@ class NameIdentityRetrievalForCsv(BaseComponent):
         The self parameter refers to an instance of a class, and it's required in order for Python to know which object you're referring to.
 
         :param self: Represent the instance of the class
-        :param model_name: Instantiate the openai llm model
+        :param model_name: Instantiate the Hugging Face LLM model
         :param data_path: Read the yaml file which contains the path to all csv files
         :return: The instance of the class
         """
         super().__init__('NameIdentityRetrievalForCsv')
         self.sources = utils.read_yaml_file(data_path)
         self.csv_sources = self.sources.get('csv', [])
-        # instantiating the openai llm model and neo4j connection
+        # Instantiate the Hugging Face-backed LLM wrapper and Neo4j connection.
         self.neo4j_instance = Neo4jDumper(config_path='app/config.yml')
         self.llm = Llm(model=model_name)
 
     def run(self, **kwargs):
         """
-        The run function is the main function of this module. It takes in a list of csv files and extracts knowledge graph from them using openai api.
+        The run function is the main function of this module. It takes in a list of csv files and extracts a knowledge graph from them using a Hugging Face model.
         The knowledge graph is then dumped into neo4j database.
 
         :param self: Represent the instance of the class
@@ -60,7 +60,7 @@ class NameIdentityRetrievalForCsv(BaseComponent):
                 # Mimic CSVLoader format: "key: value\n..."
                 page_content = "\n".join([f"{k}: {v}" for k, v in last_row.items()])
 
-                # setting up openai model and extracting knowledge graph
+                # Use the configured Hugging Face model and extract knowledge graph.
                 self.logger.info(f'loading model {self.llm}')
                 
                 response = self.llm.run(input_text=page_content)

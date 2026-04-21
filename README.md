@@ -1,6 +1,6 @@
 # LLM-WebToGraph
 
-LLM-WebToGraph is a powerful project that harnesses the capabilities of Langchain and OpenAI's Language Models (LLMs) to scrape data from various sources on the web, transforming it into a structured knowledge graph. This knowledge graph is then populated into a Neo4j Aura Database, providing an efficient way to store, query, and retrieve information using cypher query and LLMs. With the synergy of Langchain, OpenAI LLMs, and Neo4j, this project offers a robust solution for knowledge management and retrieval.
+LLM-WebToGraph is a powerful project that harnesses the capabilities of LangChain and Hugging Face-hosted language models (LLMs) to scrape data from various sources on the web, transforming it into a structured knowledge graph. This knowledge graph is then populated into a Neo4j Aura Database, providing an efficient way to store, query, and retrieve information using Cypher queries and LLMs. With the synergy of LangChain, Hugging Face models, and Neo4j, this project offers a robust solution for knowledge management and retrieval.
 
 ## Architecture
 ![design](https://github.com/prvnsingh/LLM-WebToGraph/blob/main/design.jpeg?raw=true)
@@ -12,7 +12,7 @@ The LLM-WebToGraph project combines several key components to achieve its goal:
 
 1. **Langchain:** A language model designed for natural language understanding and generation, powering the core of the project.
 
-2. **OpenAI's Language Models (LLMs):** These models are used to extract and process data from various sources, converting unstructured data into structured knowledge.
+2. **Hugging Face-hosted Language Models (LLMs):** These models are used to extract and process data from various sources, converting unstructured data into structured knowledge.
 
 3. **Neo4j Aura Database:** The project stores the structured knowledge graph in a Neo4j Aura Database, allowing for efficient storage and retrieval.
 
@@ -23,7 +23,7 @@ The LLM-WebToGraph project combines several key components to achieve its goal:
 ## Features
 
 - Web scraping from various sources, such as web links and CSV files.
-- Data transformation and extraction using **Google Gemini Pro/Flash** (previously OpenAI).
+- Data transformation and extraction using **Hugging Face-hosted Qwen models**.
 - Population of a structured knowledge graph in Neo4j Aura Database.
 - FastAPI-based health check API to monitor the application's status.
 - Streamlit web application for querying and visualizing the knowledge graph.
@@ -34,7 +34,7 @@ The LLM-WebToGraph project combines several key components to achieve its goal:
 
 - Python 3.11 or higher
 - Neo4j Database (AuraDB or Local)
-- Google GenAI API Key
+- Hugging Face API Token
 
 ### Installation & Run
 
@@ -54,7 +54,7 @@ The LLM-WebToGraph project combines several key components to achieve its goal:
 
 3. **Configure Credentials**
    - Update `src/app/config.yml` with your Neo4j URI and credentials.
-   - Set your Google API Key in `src/app/llm.py` (or via environment variables).
+   - Set your Hugging Face token in environment variables (`HUGGINGFACEHUB_API_TOKEN` or `HF_TOKEN`).
 
 4. **Run the Application**
 
@@ -95,7 +95,7 @@ Integration with more data sources for enhanced knowledge graph creation.
 ## References
 - [Langchain Graph Transformer Documentation](https://python.langchain.com/docs/use_cases/graph/diffbot_graphtransformer)
 - [Langchain Cypher Query Documentation](https://python.langchain.com/docs/use_cases/graph/graph_cypher_qa)
-- [Blog Post: Constructing Knowledge Graphs from Text](https://blog.langchain.dev/constructing-knowledge-graphs-from-text-using-openai-functions/)
+- [Blog Post: Constructing Knowledge Graphs from Text](https://blog.langchain.dev/constructing-knowledge-graphs-from-text/)
 
 ## License
 

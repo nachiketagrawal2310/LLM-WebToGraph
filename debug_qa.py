@@ -9,6 +9,7 @@ sys.path.append(os.path.join(os.getcwd(), 'src'))
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def handler(signum, frame):
     raise TimeoutError("Timeout reached")
@@ -17,27 +18,27 @@ signal.signal(signal.SIGALRM, handler)
 signal.alarm(60) # 60 seconds timeout
 
 def run():
-    print("Debug script starting...")
+    logger.info("Debug script starting")
     try:
         from services.cypher_qa import CypherQa
-        print("Imported CypherQa")
+        logger.info("Imported CypherQa")
+        model_name = os.getenv("HF_MODEL_ID", "Qwen/Qwen3-30B-A3B-Instruct-2507")
         
-        print("Instantiating CypherQa...")
+        logger.info("Instantiating CypherQa")
         start = time.time()
-        qa = CypherQa('gemini-2.5-flash')
-        print(f"Instantiated in {time.time() - start:.2f}s")
+        qa = CypherQa(model_name)
+        logger.info("Instantiated in %.2fs", time.time() - start)
         
         query = "tell me about yourself"
-        print(f"Sending query: '{query}'")
+        logger.info("Sending query: '%s'", query)
         
         start = time.time()
         result = qa.run(query)
-        print(f"Result Type: {type(result)}")
-        print(f"Result (took {time.time() - start:.2f}s): {result}")
+        logger.info("Result Type: %s", type(result))
+        logger.info("Result (took %.2fs): %s", time.time() - start, result)
         
     except Exception as e:
-        print(f"EXCEPTION: {e}")
-        traceback.print_exc()
+        logger.exception("Exception while running debug QA: %s", e)
 
 if __name__ == "__main__":
     run()

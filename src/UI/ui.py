@@ -3,7 +3,7 @@ import streamlit as st
 
 st.title("LLM-WebToGraph")
 st.text(
-    'This project using langchain and Google Gemini LLM to transform data from different sources (weblinks/csv) to knowledge graph and store then in neo4j DB.')
+    'This project uses LangChain and Hugging Face Qwen models to transform data from different sources (weblinks/csv) into a knowledge graph and store it in Neo4j DB.')
 st.write('Press submit to upload process the data and generate knowledge graph.')
 
 if st.button("process csv files and generate knowledge graph"):

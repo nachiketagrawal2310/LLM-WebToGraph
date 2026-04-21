@@ -1,26 +1,41 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
 import os
+import logging
 from dotenv import load_dotenv
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def check():
     try:
-        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=os.getenv('GOOGLE_API_KEY'))
+        model_name = os.getenv("HF_MODEL_ID", "Qwen/Qwen3-30B-A3B-Instruct-2507")
+        token = os.getenv("HUGGINGFACEHUB_API_TOKEN") or os.getenv("HF_TOKEN")
+        llm = ChatHuggingFace(
+            llm=HuggingFaceEndpoint(
+                repo_id=model_name,
+                task="text-generation",
+                provider=os.getenv("HF_INFERENCE_PROVIDER", "auto"),
+                max_new_tokens=256,
+                do_sample=False,
+                huggingfacehub_api_token=token,
+            )
+        )
+
         if hasattr(llm, 'with_structured_output'):
-            print("with_structured_output is AVAILABLE")
+            logger.info("with_structured_output is AVAILABLE")
         else:
-            print("with_structured_output is NOT available")
+            logger.warning("with_structured_output is NOT available")
             
         # Also check imports
         try:
-            from langchain.chains import create_extraction_chain
-            print("create_extraction_chain IMPORTABLE")
+            from langchain_huggingface import ChatHuggingFace as _CH
+            logger.info("langchain_huggingface IMPORTABLE")
         except ImportError:
-            print("create_extraction_chain NOT IMPORTABLE")
+            logger.error("langchain_huggingface NOT IMPORTABLE")
             
     except Exception as e:
-        print(f"Error: {e}")
+        logger.exception("Capability check failed: %s", e)
 
 if __name__ == "__main__":
     check()

@@ -9,9 +9,11 @@ from services.Identity_retrival_for_csv import NameIdentityRetrievalForCsv
 from services.Identity_retrival_for_html import NameIdentityRetrievalForHtml
 from services.cypher_qa import CypherQa
 
+DEFAULT_MODEL_NAME = os.getenv("HF_MODEL_ID", "Qwen/Qwen3-30B-A3B-Instruct-2507")
+
 app = FastAPI(
     title="LLM-WebToGraph",
-    description="""This project using langchain and OpenAI LLM to transform data from different sources (web 
+    description="""This project uses LangChain and Hugging Face-hosted Qwen models to transform data from different sources (web 
     links/csv) to knowledge graph and store then in neo4j DB.""",
     version="0.1.0",
 )
@@ -22,15 +24,14 @@ def query_graph(question: str):
 
     """
     The query_graph function takes a question as input and returns the answer to that question.
-    The function uses the CypherQa class from the cypher_qachain package, which is an implementation of
-    the QAChain algorithm for answering questions about graphs using GPT-3. The model used by this function
-    is gpt-3.5-turbo, which was trained on a dataset of ~100k questions and answers about graphs.
+    The function uses the CypherQa class to answer graph questions using the configured
+    Hugging Face model (HF_MODEL_ID, defaults to Qwen/Qwen3-30B-A3B-Instruct-2507).
 
     :param question: str: Pass the question to the function
     :return: A htmlresponse object
 
     """
-    graph_cypher_qachain = CypherQa(model_name='gemini-2.5-flash')
+    graph_cypher_qachain = CypherQa(model_name=DEFAULT_MODEL_NAME)
     response = graph_cypher_qachain.run(question)
     return HTMLResponse(content=response, status_code=200)
 
@@ -50,7 +51,7 @@ async def generate_tags():
     src_dir = os.path.dirname(current_dir) # src
     datasources_path = os.path.join(src_dir, 'datalayer', 'datasources.yml')
 
-    ner = NameIdentityRetrievalForHtml(model_name='gemini-2.5-flash', data_path=datasources_path)
+    ner = NameIdentityRetrievalForHtml(model_name=DEFAULT_MODEL_NAME, data_path=datasources_path)
     ner.run_async()  # asyncronous call since html pages can take time to load and scrape
     return HTMLResponse(content='Successfully generated the knowledge from the data sources!!!', status_code=200)
 
@@ -69,7 +70,7 @@ def generate_tags():
     src_dir = os.path.dirname(current_dir) # src
     datasources_path = os.path.join(src_dir, 'datalayer', 'datasources.yml')
     
-    ner = NameIdentityRetrievalForCsv(model_name='gemini-2.5-flash', data_path=datasources_path)
+    ner = NameIdentityRetrievalForCsv(model_name=DEFAULT_MODEL_NAME, data_path=datasources_path)
     ner.run()
     return HTMLResponse(content='Successfully generated the knowledge from the data sources!!!', status_code=200)
 

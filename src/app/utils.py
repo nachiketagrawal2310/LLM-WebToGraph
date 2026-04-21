@@ -1,4 +1,8 @@
+import logging
 import yaml
+
+
+logger = logging.getLogger(__name__)
 
 
 def read_yaml_file(file_path):
@@ -16,10 +20,10 @@ def read_yaml_file(file_path):
             config = yaml.safe_load(yaml_file)
         return config
     except FileNotFoundError:
-        print(f"Error: Config file not found at {file_path}")
+        logger.error("Config file not found at %s", file_path)
         return {}
     except yaml.YAMLError as e:
-        print(f"Error: Failed to load YAML from {file_path}. {e}")
+        logger.error("Failed to load YAML from %s. %s", file_path, e)
         return {}
 
 

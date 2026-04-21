@@ -23,7 +23,7 @@ class NameIdentityRetrievalForHtml(BaseComponent):
         super().__init__('NameIdentityRetrievalForHtml')
         self.sources = utils.read_yaml_file(data_path)
         self.html_sources = self.sources.get('link', [])
-        # instantiating the openai llm model and neo4j connection
+        # Instantiate the Hugging Face-backed LLM wrapper and Neo4j connection.
         self.neo4j_instance = Neo4jDumper(config_path='app/config.yml')
         self.llm = Llm(model=model_name)
 
@@ -31,7 +31,7 @@ class NameIdentityRetrievalForHtml(BaseComponent):
 
         """
         The run_async function is used to run the pipeline asynchronously.
-            It takes in a list of html sources and extracts knowledge graph from them using openai api.
+            It takes in a list of html sources and extracts knowledge graph from them using a Hugging Face model.
             The extracted knowledge graph is then dumped into neo4j database.
 
         :param self: Represent the instance of the object itself
@@ -62,10 +62,10 @@ class NameIdentityRetrievalForHtml(BaseComponent):
                 content = docs_transformed[0].page_content
                 self.logger.info(content[0:500])
 
-                # setting up openai model and extracting knowledge graph
+                # Use the configured Hugging Face model and extract knowledge graph.
                 self.logger.info(f'loading model {self.llm}')
 
-                # Gemini has a large context window, so we can pass the whole content
+                # The selected model supports long context, so we can pass the whole content
                 llm_response = self.llm.run(input_text=content)
                 # instantiating neo4jBD and dumping the knowledge graph
                 self.neo4j_instance.run(data=llm_response)
