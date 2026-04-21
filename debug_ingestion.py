@@ -10,15 +10,17 @@ from services.Identity_retrival_for_csv import NameIdentityRetrievalForCsv
 from app import utils
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def run():
-    print("Debug Ingestion FULL Script")
+    logger.info("Debug Ingestion FULL Script")
     try:
+        model_name = os.getenv("HF_MODEL_ID", "Qwen/Qwen3-30B-A3B-Instruct-2507")
         # Check if config exists
         if not os.path.exists('src/datalayer/datasources.yml'):
-           print("WARNING: src/datalayer/datasources.yml not found in CWD")
+           logger.warning("src/datalayer/datasources.yml not found in CWD")
         else:
-           print("Found src/datalayer/datasources.yml")
+           logger.info("Found src/datalayer/datasources.yml")
 
         # Instantiate the actual service
         # Note: main.py uses 'datalayer/datasources.yml' 
@@ -31,18 +33,17 @@ def run():
         data_path = 'src/datalayer/datasources.yml' # Adjusted for validity from root
         # Or should I try the broken path? 'datalayer/datasources.yml'
         
-        print(f"Using data_path: {data_path}")
+        logger.info("Using data_path: %s", data_path)
         
-        ner = NameIdentityRetrievalForCsv(model_name='gemini-2.5-flash', data_path=data_path)
-        print("Initialized service.")
+        ner = NameIdentityRetrievalForCsv(model_name=model_name, data_path=data_path)
+        logger.info("Initialized service")
         
-        print("Running service...")
+        logger.info("Running service")
         ner.run()
-        print("Finished run.")
+        logger.info("Finished run")
         
     except Exception as e:
-        print(f"Error: {e}")
-        traceback.print_exc()
+        logger.exception("Error while running debug ingestion: %s", e)
 
 if __name__ == "__main__":
     run()

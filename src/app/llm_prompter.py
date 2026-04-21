@@ -1,18 +1,12 @@
 import os
 from typing import List, Optional
 
-import backoff
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import Document
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_random_exponential,
-)
 
 from app import utils
+from app.llm import DEFAULT_HF_MODEL, build_hf_chat_model
 from components.base_component import BaseComponent
 from datalayer.KnowledgeGraph import KnowledgeGraph
 
@@ -39,12 +33,8 @@ class LlmPrompter(BaseComponent):
     def __init__(self, model: str):
         super().__init__('LlmPrompter')
 
-        self.model = model or "gemini-2.5-flash"
-        # for huggingface hub models
-        # self.llm = HuggingFaceHub(repo_id='ValiantLabs/ShiningValiant', task='text-generation',
-        #                           huggingfacehub_api_token=os.getenv('HF_AUTH_TOKEN'),
-        #                           model_kwargs={"temperature": 0, "max_length": 64})
-        self.llm = ChatGoogleGenerativeAI(temperature=0, model=self.model, google_api_key='AIzaSyBt8hNgFnkNlm5UHy3pHdPjMPyI44ZLbTw')
+        self.model = model or os.getenv("HF_MODEL_ID", DEFAULT_HF_MODEL)
+        self.llm = build_hf_chat_model(self.model)
 
     def run(self, document: Document,
             nodes: Optional[List[str]] = None,
@@ -58,7 +48,7 @@ class LlmPrompter(BaseComponent):
         prompt = ChatPromptTemplate.from_messages(
             [(
                 "system",
-                f"""# Knowledge Graph Instructions for Google Gemini
+                f"""# Knowledge Graph Instructions
     ## 1. Overview
     You are a top-tier algorithm designed for extracting information in structured formats to build a knowledge graph.
     - **Nodes** represent entities and concepts. They're akin to largest infrastructure projects nodes.
@@ -92,7 +82,7 @@ class LlmPrompter(BaseComponent):
                                 document: Document,
                                 nodes: Optional[List[str]] = None,
                                 rels: Optional[List[str]] = None):
-        # Extract graph data using Gemini structured output
+        # Extract graph data using structured output
         extract_chain = self.get_extraction_chain(nodes, rels)
         # Run the chain (prompt | model)
         data = extract_chain.invoke({"input": document.page_content})

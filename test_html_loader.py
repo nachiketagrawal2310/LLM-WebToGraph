@@ -1,6 +1,12 @@
-print("Importing AsyncHtmlLoader...")
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+logger.info("Importing AsyncHtmlLoader")
 try:
     from langchain_community.document_loaders import AsyncHtmlLoader
-    print("AsyncHtmlLoader imported.")
+    logger.info("AsyncHtmlLoader imported")
 except Exception as e:
-    print(f"AsyncHtmlLoader failed: {e}")
+    logger.exception("AsyncHtmlLoader failed: %s", e)

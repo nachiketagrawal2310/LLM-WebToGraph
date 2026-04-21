@@ -1,26 +1,33 @@
-print("Importing langchain...")
-import langchain
-print("Importing pydantic...")
-import pydantic
-print(f"Pydantic version: {pydantic.__version__}")
+import logging
 
-print("Importing Neo4jDumper...")
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+logger.info("Importing langchain")
+import langchain
+logger.info("Importing pydantic")
+import pydantic
+logger.info("Pydantic version: %s", pydantic.__version__)
+
+logger.info("Importing Neo4jDumper")
 try:
     from datalayer.Neo4jDumper import Neo4jDumper
-    print("Neo4jDumper imported.")
+    logger.info("Neo4jDumper imported")
 except Exception as e:
-    print(f"Neo4jDumper failed: {e}")
+    logger.exception("Neo4jDumper failed: %s", e)
 
-print("Importing Identity_retrival_for_html...")
+logger.info("Importing Identity_retrival_for_html")
 try:
     from services.Identity_retrival_for_html import NameIdentityRetrievalForHtml
-    print("NameIdentityRetrievalForHtml imported.")
+    logger.info("NameIdentityRetrievalForHtml imported")
 except Exception as e:
-    print(f"NameIdentityRetrievalForHtml failed: {e}")
+    logger.exception("NameIdentityRetrievalForHtml failed: %s", e)
 
-print("Importing Identity_retrival_for_csv...")
+logger.info("Importing Identity_retrival_for_csv")
 try:
     from services.Identity_retrival_for_csv import NameIdentityRetrievalForCsv
-    print("NameIdentityRetrievalForCsv imported.")
+    logger.info("NameIdentityRetrievalForCsv imported")
 except Exception as e:
-    print(f"NameIdentityRetrievalForCsv failed: {e}")
+    logger.exception("NameIdentityRetrievalForCsv failed: %s", e)
