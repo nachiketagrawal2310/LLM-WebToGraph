@@ -26,3 +26,12 @@ logs/
 .mypy_cache/
 .coverage
 htmlcov/
+
+# Frontend
+src/frontend/node_modules
+src/frontend/dist
+src/frontend/.svelte-kit
+src/frontend/.env
+src/frontend/.env.*
+!src/frontend/.env.example
+src/frontend/*.log
