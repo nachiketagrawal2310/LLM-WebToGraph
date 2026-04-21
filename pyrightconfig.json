@@ -2,7 +2,21 @@
   "executionEnvironments": [
     {
       "root": ".",
-      "extraPaths": ["src"]
+      "extraPaths": [
+        "src"
+      ]
+    },
+    {
+      "root": "scripts",
+      "extraPaths": [
+        "src"
+      ]
+    },
+    {
+      "root": "tests",
+      "extraPaths": [
+        "src"
+      ]
     }
   ]
 }

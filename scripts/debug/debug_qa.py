@@ -1,12 +1,15 @@
 import sys
 import os
 import logging
-import traceback
+from pathlib import Path
 
-# Add src to path
-sys.path.append(os.path.join(os.getcwd(), 'src'))
+# Add src to path using script location (works from any cwd).
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SRC_DIR = REPO_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
-from src.services.cypher_qa import CypherQa
+from services.cypher_qa import CypherQa
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,8 +19,7 @@ def test_qa():
     try:
         qa = CypherQa(model_name=model_name)
     except Exception as e:
-        logger.error(f"Failed to initialize CypherQa: {e}")
-        traceback.print_exc()
+        logger.exception("Failed to initialize CypherQa: %s", e)
         return
 
     questions = [
@@ -25,13 +27,12 @@ def test_qa():
     ]
     
     for q in questions:
-        logger.info(f"Question: {q}")
+        logger.info("Question: %s", q)
         try:
             response = qa.run(q)
-            logger.info(f"Answer: {response}")
+            logger.info("Answer: %s", response)
         except Exception as e:
-            logger.error(f"QA failed: {e}")
-            traceback.print_exc()
+            logger.exception("QA failed: %s", e)
 
 if __name__ == "__main__":
     test_qa()

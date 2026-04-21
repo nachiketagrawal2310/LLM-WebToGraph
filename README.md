@@ -18,7 +18,7 @@ The LLM-WebToGraph project combines several key components to achieve its goal:
 
 4. **FastAPI:** To expose an API for interacting with the project and to check its health status.
 
-5. **Streamlit:** For building a user-friendly interface to query and visualize the knowledge graph.
+5. **Svelte:** A modern, reactive frontend for querying and visualizing the knowledge graph.
 
 ## Features
 
@@ -26,13 +26,39 @@ The LLM-WebToGraph project combines several key components to achieve its goal:
 - Data transformation and extraction using **Hugging Face-hosted Qwen models**.
 - Population of a structured knowledge graph in Neo4j Aura Database.
 - FastAPI-based health check API to monitor the application's status.
-- Streamlit web application for querying and visualizing the knowledge graph.
+- **Svelte SPA** for a responsive user experience.
+- Legacy Streamlit web application for backwards compatibility.
+
+## Project Layout
+
+```text
+LLM-WebToGraph/
+├── src/
+│   ├── app/           # Core LLM app logic and FastAPI entrypoint
+│   ├── components/    # Shared base components
+│   ├── datalayer/     # Neo4j dumpers, graph models, preprocessing
+│   ├── services/      # CSV/HTML ingestion and Cypher QA services
+│   ├── data/          # Sample/source datasets
+│   └── UI/            # Legacy Streamlit UI
+├── src/
+│   └── frontend/      # New Svelte SPA Frontend
+├── scripts/
+│   ├── debug/         # Debug and troubleshooting scripts
+│   ├── diagnostics/   # Environment and dependency diagnostics
+│   └── verify/        # External connectivity checks (HF/Neo4j)
+├── tests/
+│   └── smoke/         # Lightweight import and capability smoke checks
+├── requirements.txt
+├── run.sh             # Unified script to start both Backend and Svelte Frontend
+└── README.md
+```
 
 ## Getting Started
 
 ### Prerequisites
 
 - Python 3.11 or higher
+- Node.js (v18+) and npm
 - Neo4j Database (AuraDB or Local)
 - Hugging Face API Token
 
@@ -42,7 +68,7 @@ The LLM-WebToGraph project combines several key components to achieve its goal:
    - Ensure data files are in `src/data/` if using CSVs.
    - Update `src/datalayer/datasources.yml` with any HTML links.
 
-2. **Setup Environment**
+2. **Setup Backend**
    ```bash
    # Create and activate virtual environment
    python3.11 -m venv venv
@@ -52,24 +78,58 @@ The LLM-WebToGraph project combines several key components to achieve its goal:
    pip install -r requirements.txt
    ```
 
-3. **Configure Credentials**
+3. **Setup Frontend**
+   ```bash
+   cd src/frontend
+   npm install
+   cd ../
+   ```
+
+4. **Configure Credentials**
    - Update `src/app/config.yml` with your Neo4j URI and credentials.
    - Set your Hugging Face token in environment variables (`HUGGINGFACEHUB_API_TOKEN` or `HF_TOKEN`).
 
-4. **Run the Application**
+5. **Run the Application (Recommended)**
+   ```bash
+   chmod +x run.sh
+   ./run.sh
+   ```
+   *This starts both the FastAPI backend (port 8000) and Svelte frontend (port 5173).*
 
-   **Backend (FastAPI):**
+   **Manual Start:**
+
+   *Backend:*
    ```bash
    export PYTHONPATH=$PYTHONPATH:$(pwd)/src
-   python src/app/main.py
+   python3 src/app/main.py
    ```
-   *Access Swagger documentation at: http://localhost:8000/docs*
 
-   **Frontend (Streamlit):**
+   *Frontend (Svelte):*
+   ```bash
+   cd src/frontend
+   npm run dev
+   ```
+
+   *Legacy Frontend (Streamlit):*
    ```bash
    streamlit run src/UI/ui.py
    ```
-   *Access UI at: http://localhost:8501/*
+
+### Utility Scripts
+
+```bash
+# Diagnostics
+python scripts/diagnostics/check_capabilities.py
+python scripts/diagnostics/list_models.py
+
+# Verification
+python scripts/verify/verify_hf_connection.py
+python scripts/verify/verify_neo4j.py
+
+# Debug helpers
+python scripts/debug/debug_ingestion.py
+python scripts/debug/debug_qa.py
+```
 ## Working directory
 ![Directory Tree](https://github.com/prvnsingh/LLM-WebToGraph/blob/main/dirTree.jpg?raw=true)
 
@@ -100,4 +160,3 @@ Integration with more data sources for enhanced knowledge graph creation.
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-# LLM-WebToGraph

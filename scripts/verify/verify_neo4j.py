@@ -1,9 +1,13 @@
 import os
 import sys
 import logging
+from pathlib import Path
 
-# Add src to path
-sys.path.append(os.path.join(os.getcwd(), 'src'))
+# Add src to path using script location (works from any cwd).
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SRC_DIR = REPO_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 from app import utils
 from neo4j import GraphDatabase
@@ -14,10 +18,10 @@ logger = logging.getLogger(__name__)
 def verify_neo4j():
     try:
         logger.info("Reading config")
-        config = utils.read_yaml_file('src/app/config.yml')
+        config = utils.read_yaml_file(str(REPO_ROOT / 'src' / 'app' / 'config.yml'))
         if not config:
             logger.warning("Config not found in src/app/config.yml, trying app/config.yml")
-            config = utils.read_yaml_file('app/config.yml')
+            config = utils.read_yaml_file(str(REPO_ROOT / 'app' / 'config.yml'))
         
         if not config:
             logger.error("Could not find config.yml")
