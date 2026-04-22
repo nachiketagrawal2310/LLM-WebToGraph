@@ -8,7 +8,7 @@
     "allowJs": true,
     "checkJs": true,
     "isolatedModules": true,
-    "ignoreDeprecations": "6.0",
+
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {

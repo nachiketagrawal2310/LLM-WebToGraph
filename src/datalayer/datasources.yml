@@ -1,7 +1,17 @@
-#add more urls
+# Remote URLs for HTML knowledge extraction
 link:
-    - https://en.wikipedia.org/wiki/Python_(programming_language)
+    - https://en.wikipedia.org/wiki/Knowledge_graph
+    - https://en.wikipedia.org/wiki/Large_language_model
+    - https://en.wikipedia.org/wiki/Graph_database
+    - https://en.wikipedia.org/wiki/Transformer_(deep_learning_architecture)
+
+# Local HTML files for knowledge extraction
+html_file:
+    - data/ArtificialIntelligence_KnowledgeBase_RESEARCH_20240422.html
+    - data/ClimateScience_EnvironmentalSystems_REFERENCE_20240422.html
+
+# CSV files for structured knowledge extraction
 csv:
-    - data/sample_movies.csv
-    - data/sample_songs.csv
-    - data/sample_scientific.csv
+    - data/MachineLearningResearch_Publications_CORPUS_20240422.csv
+    - data/TechnologyEnterprises_Global_KNOWLEDGEGRAPH_20240422.csv
+    - data/PharmaceuticalInteractions_DrugData_CLINICAL_20240422.csv

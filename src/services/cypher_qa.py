@@ -2,6 +2,7 @@ from langchain_neo4j import GraphCypherQAChain
 from app.llm import Llm
 from components.base_component import BaseComponent
 from datalayer.Neo4jDumper import Neo4jDumper
+from duckduckgo_search import DDGS
 
 
 class CypherQa(BaseComponent):
@@ -9,8 +10,8 @@ class CypherQa(BaseComponent):
         super().__init__('cypher_qa')
         # Instantiate the Hugging Face-backed LLM wrapper and Neo4j connection.
         self.neo4j_instance = Neo4jDumper(config_path='app/config.yml')
-        # Fast inference setting for QA: max_tokens=256 reduces the HuggingFace wait time by 80%
-        self.chat_llm = Llm(model=model_name, max_tokens=256)
+        # Fast inference setting for QA: max_tokens=512 for more detailed internet fallback
+        self.chat_llm = Llm(model=model_name, max_tokens=512)
         
         if not self.neo4j_instance.graph:
             self.logger.error("Neo4j database connection failed. Cypher QA chain will not be initialized.")
@@ -19,31 +20,24 @@ class CypherQa(BaseComponent):
 
         from langchain_core.prompts import PromptTemplate
 
+        # Improved Cypher prompt with case-insensitive and partial matching logic
         cypher_generation_template = """Task: Generate a Cypher statement to query a Neo4j graph database.
 Instructions:
 1. Use only the relationship types and properties provided in the schema.
 2. The 'id' property is used for entity names/identifiers.
-3. When matching relationships, if direction doesn't matter, use undirected matches like (a)-[]-(b) instead of (a)-[]->(b) to ensure you don't miss reverse structures.
-4. Return only the Cypher statement. No explanations.
+3. CRITICAL: Use `CONTAINS` and `toLower()` for fuzzy string matching to avoid exact match failures.
+4. For example, instead of `{{id: "Apple"}}`, use `WHERE toLower(n.id) CONTAINS "apple"`.
+5. Return only the Cypher statement. No explanations.
 
 Schema:
 {schema}
 
 Examples:
-Question: "Who is the POC for Project Alpha?"
-Cypher: MATCH (p:Project {{id: "Project Alpha"}})-[:POC]-(poc:Person) RETURN poc.name
+Question: "Who is the CEO of Apple?"
+Cypher: MATCH (c:Company) WHERE toLower(c.id) CONTAINS "apple" RETURN c.CurrentCEO
 
-Question: "What organization is involved in Project Beta?"
-Cypher: MATCH (p:Project {{id: "Project Beta"}}) RETURN p.organization
-
-Question: "What genres are associated with Inception?"
-Cypher: MATCH (m:Movie {{id: "Inception"}})-[]-(g:Genre) RETURN g.id
-
-Question: "Which nodes exist in the graph?"
-Cypher: MATCH (n) RETURN n.id, labels(n) LIMIT 20
-
-Question: "What data are you fed?" or "What is this data about?"
-Cypher: CALL db.labels() YIELD label RETURN label LIMIT 20
+Question: "Papers on climate?"
+Cypher: MATCH (p:Paper) WHERE toLower(p.Title) CONTAINS "climate" OR toLower(p.Abstract) CONTAINS "climate" RETURN p.Title
 
 Question: {question}
 Cypher:"""
@@ -53,15 +47,14 @@ Cypher:"""
             input_variables=["schema", "question"]
         )
 
-        qa_generation_template = """You are a highly efficient and to-the-point assistant.
-Your job is to read raw data (the "Information" below) and relay the exact answer to the user in a natural but extremely concise manner.
+        # Relaxed QA prompt that allows for fallback
+        qa_generation_template = """You are an expert research assistant.
+Answer the question based on the "Information" provided. 
 
-RULES:
-1. NEVER output raw JSON, arrays, lists, dictionaries, or database keys. Extract the value and answer directly.
-2. Keep your answers brief, concise, and to the point. No unnecessary pleasantries or conversational fluff.
-3. CRITICAL: You are STRICTLY forbidden from using your pre-trained internet knowledge to answer the question. 
-4. CRITICAL: If the "Information:" section below is empty, you MUST reply: "I don't have that information." You CANNOT answer the question if the Information section is empty.
-5. Never mention the "context" or say "Based on the database". Just answer directly.
+Rules:
+1. If the "Information" is helpful, use it to give a precise, grounded answer.
+2. If the "Information" is empty or not helpful, but you have relevant knowledge (from your training or provided search context), answer the question directly.
+3. Be professional, academic, and concise.
 
 Information:
 {context}
@@ -85,18 +78,54 @@ Assistant Response:"""
             allow_dangerous_requests=True
         )
 
+    def _web_search(self, query: str) -> str:
+        """Fallback to DuckDuckGo search if the graph has no answer."""
+        try:
+            self.logger.info(f"Attempting web search fallback for: {query}")
+            with DDGS() as ddgs:
+                results = list(ddgs.text(query, max_results=3))
+                if results:
+                    search_context = "\n".join([f"- {r['title']}: {r['body']}" for r in results])
+                    return f"\n(Search Results Fallback):\n{search_context}"
+        except Exception as e:
+            self.logger.error(f"Web search failed: {e}")
+        return ""
+
     def run(self, text):
         if not self.cypher_chain:
-            return "Hi there! I'm sorry, but my database connection is currently down, so I can't look that up for you right now. Please try again later!"
+            return "Database connection is down. Please check your Neo4j configuration."
         
         text_lower = text.lower()
         if "what data" in text_lower or "what is this data" in text_lower or "fed" in text_lower:
-            labels = self.neo4j_instance.graph.query("CALL db.labels() YIELD label RETURN label")
-            label_names = [l['label'] for l in labels]
-            return f"Hello! I am currently assisting you with data across the following areas: {', '.join(label_names)}. What would you like to explore today?"
+            try:
+                labels = self.neo4j_instance.graph.query("CALL db.labels() YIELD label RETURN label")
+                label_names = [l['label'] for l in labels]
+                return f"I am currently assisting you with data across the following areas: {', '.join(label_names)}."
+            except:
+                return "The knowledge graph is currently empty or unreachable."
             
         try:
-            return self.cypher_chain.invoke(text)['result']
+            # 1. Try Graph Search
+            result_obj = self.cypher_chain.invoke(text)
+            answer = result_obj['result']
+            
+            # 2. If Graph says it doesn't know, try Web Search Fallback
+            if "i don't have that information" in answer.lower() or "not found" in answer.lower() or "not in the database" in answer.lower():
+                search_data = self._web_search(text)
+                if search_data:
+                    # Re-invoke LLM with search context
+                    prompt = f"Question: {text}\n\nInformation from Web Search:\n{search_data}\n\nPlease answer based on the search results."
+                    fallback_response = self.chat_llm.llm.invoke(prompt)
+                    return fallback_response.content if hasattr(fallback_response, "content") else str(fallback_response)
+            
+            return answer
         except Exception as e:
-            self.logger.error(f"Cypher QA failed: {e}")
-            return "I sincerely apologize, but I couldn't figure out how to retrieve that specific information from the database right now. Could you please try rephrasing your question?"
+            self.logger.error(f"QA execution failed: {e}")
+            # Final fallback: just let the LLM answer if it can
+            try:
+                 search_data = self._web_search(text)
+                 prompt = f"User Question: {text}\n\nSearch Context:\n{search_data}\n\nExpert Answer:"
+                 response = self.chat_llm.llm.invoke(prompt)
+                 return response.content if hasattr(response, "content") else str(response)
+            except:
+                 return "I encountered an error while processing your request. Please try again later."

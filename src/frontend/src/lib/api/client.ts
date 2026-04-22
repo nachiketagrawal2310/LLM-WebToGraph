@@ -4,43 +4,75 @@ export interface ApiResponse<T> {
   message: string | null;
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const BASE_URL = 'http://localhost:8000';
+
+async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    return {
+      status: 'error',
+      data: null,
+      message: errorData.message || `HTTP error! status: ${response.status}`
+    };
+  }
+  return await response.json();
+}
 
 export async function queryGraph(question: string): Promise<ApiResponse<{ answer: string }>> {
-  console.log('Mock: queryGraph', question);
-  await sleep(1500);
-  return {
-    status: 'success',
-    data: { answer: `This is a mock response for your question: "${question}". The UI is working in standalone mode without the Python backend.` },
-    message: null
-  };
+  try {
+    const response = await fetch(`${BASE_URL}/query_graph/${encodeURIComponent(question)}`);
+    return await handleResponse<{ answer: string }>(response);
+  } catch (error) {
+    return {
+      status: 'error',
+      data: null,
+      message: error instanceof Error ? error.message : 'Unknown connection error'
+    };
+  }
 }
 
 export async function processCSV(): Promise<ApiResponse<{ task_id: string; message: string }>> {
-  console.log('Mock: processCSV');
-  await sleep(2000);
-  return {
-    status: 'success',
-    data: { task_id: 'mock-csv-task-id', message: 'CSV processing started (Mock)' },
-    message: null
-  };
+  try {
+    const response = await fetch(`${BASE_URL}/generate_tags_from_csv`);
+    return await handleResponse<{ task_id: string; message: string }>(response);
+  } catch (error) {
+    return {
+      status: 'error',
+      data: null,
+      message: error instanceof Error ? error.message : 'Unknown connection error'
+    };
+  }
 }
 
 export async function processHTML(): Promise<ApiResponse<{ task_id: string; message: string }>> {
-  console.log('Mock: processHTML');
-  await sleep(2000);
-  return {
-    status: 'success',
-    data: { task_id: 'mock-html-task-id', message: 'HTML processing started (Mock)' },
-    message: null
-  };
+  try {
+    const response = await fetch(`${BASE_URL}/generate_tags_from_html`);
+    return await handleResponse<{ task_id: string; message: string }>(response);
+  } catch (error) {
+    return {
+      status: 'error',
+      data: null,
+      message: error instanceof Error ? error.message : 'Unknown connection error'
+    };
+  }
 }
 
 export async function healthCheck(): Promise<ApiResponse<{ neo4j_connected: boolean }>> {
-  console.log('Mock: healthCheck');
-  return {
-    status: 'success',
-    data: { neo4j_connected: true },
-    message: null
-  };
+  try {
+    const response = await fetch(`${BASE_URL}/health`);
+    const data = await response.json();
+    
+    // Normalize health check response
+    return {
+      status: data.status === 'healthy' ? 'success' : 'error',
+      data: { neo4j_connected: data.neo4j_connected || false },
+      message: null
+    };
+  } catch (error) {
+    return {
+      status: 'error',
+      data: { neo4j_connected: false },
+      message: error instanceof Error ? error.message : 'Backend unreachable'
+    };
+  }
 }

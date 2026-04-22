@@ -16,7 +16,7 @@ from services.Identity_retrival_for_csv import NameIdentityRetrievalForCsv
 from services.Identity_retrival_for_html import NameIdentityRetrievalForHtml
 from services.cypher_qa import CypherQa
 
-DEFAULT_MODEL_NAME = os.getenv("HF_MODEL_ID", "Qwen/Qwen3-30B-A3B-Instruct-2507")
+DEFAULT_MODEL_NAME = os.getenv("HF_MODEL_ID", "Qwen/Qwen2.5-7B-Instruct")
 
 app = FastAPI(
     title="LLM-WebToGraph",
@@ -193,7 +193,7 @@ def health_check():
     except Exception:
         return {
             "status": "unhealthy",
-            "neo4j_connected": false,
+            "neo4j_connected": False,
             "timestamp": datetime.now().isoformat()
         }
 

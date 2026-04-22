@@ -4,6 +4,8 @@ import re
 from dotenv import load_dotenv
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
 
 from app import utils
 from components.base_component import BaseComponent
@@ -11,12 +13,51 @@ from components.base_component import BaseComponent
 load_dotenv(override=True)
 
 
-DEFAULT_HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.3"
+DEFAULT_HF_MODEL = "Qwen/Qwen2.5-7B-Instruct"
+LORA_PATH = "finetuned/full_kb"
 
 
 def build_hf_chat_model(model: str = None, max_tokens: int = 2048):
-    """Build a Hugging Face chat model using the serverless inference endpoint."""
+    """Build a Hugging Face chat model. Loads Qwen 2.5 by default."""
     repo_id = model or os.getenv("HF_MODEL_ID", DEFAULT_HF_MODEL)
+    print(f"Initializing LLM using model: {repo_id}")
+    
+    # Check if we should use local LoRA model
+    if os.path.exists(LORA_PATH) and os.listdir(LORA_PATH):
+        print(f"Loading local fine-tuned model from {LORA_PATH}")
+        try:
+            # For local LoRA, we might need a different approach than HuggingFaceEndpoint
+            # If the user wants to run locally, they'd use a local pipeline
+            # But here we stick to the existing architecture as much as possible.
+            # However, HuggingFaceEndpoint is for API-based inference.
+            # To use LoRA, we usually need local inference or a custom deployment.
+            # For this task, we'll assume the user wants to use local inference if LoRA is present.
+            from langchain_community.llms import HuggingFacePipeline
+            import torch
+            
+            tokenizer = AutoTokenizer.from_pretrained(LORA_PATH)
+            base_model = AutoModelForCausalLM.from_pretrained(
+                repo_id, 
+                torch_dtype=torch.float16, 
+                device_map="auto",
+                trust_remote_code=True
+            )
+            model_lora = PeftModel.from_pretrained(base_model, LORA_PATH)
+            
+            from transformers import pipeline
+            pipe = pipeline(
+                "text-generation",
+                model=model_lora,
+                tokenizer=tokenizer,
+                max_new_tokens=max_tokens,
+                temperature=0.01,
+                repetition_penalty=1.03,
+            )
+            hf_pipe = HuggingFacePipeline(pipeline=pipe)
+            return ChatHuggingFace(llm=hf_pipe)
+        except Exception as e:
+            print(f"Failed to load local LoRA model: {e}. Falling back to API.")
+
     api_token = os.getenv("HUGGINGFACEHUB_API_TOKEN") or os.getenv("HF_TOKEN")
     if not api_token:
         raise ValueError(
